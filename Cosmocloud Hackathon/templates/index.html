@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Check Your Stock</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form method="post">
+            <label for="stock">Enter Stock Symbol:</label>
+            <input type="text" id="stock" name="stock" required>
+            
+            <!-- <label for="period">Select Period:</label>
+            <select id="period" name="period">
+                <option value="1d">Today</option>
+                <option value="5d">This Week</option>
+                <option value="1mo">This Month</option>
+            </select> -->
+            
+            <button type="submit">Check Stock</button>
+        </form>
+    </div>
+</body>
+</html>

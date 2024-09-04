@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Result</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Stock Analysis</h1>
+    <p>Stock: {{ stock }}</p>
+    <p>Price: ₹{{ price }}</p>
+    <p id="rating">Rating: {{ rating }}/10</p>
+    <p>Top Investors Interested: {{ 'Yes' if top_investors else 'No' }}</p>
+
+    <h2>Performance Graph</h2>
+    <img src="data:image/png;base64,{{ graph }}" alt="Stock Performance Graph">
+
+    <form method="post" action="/update">
+      <input type="hidden" name="stock" value="{{ stock }}">
+      <label for="period">Select Performance Period:</label>
+      <select id="period" name="period">
+        <option value="1d" {% if period=='1d' %}selected{% endif %}>Today</option>
+        <option value="5d" {% if period=='5d' %}selected{% endif %}>This Week</option>
+        <option value="1mo" {% if period=='1mo' %}selected{% endif %}>This Month</option>
+      </select>
+      <button type="submit">Update Graph</button>
+    </form>
+
+    <a href="/">Check another stock</a>
+  </div>
+  <script>
+    // let ratingElement = document.getElementById("rating");
+
+    // if (ratingElement.textContent.trim()) {
+    //   let ratingValue = parseFloat(ratingElement.textContent.trim());
+
+    //   if (ratingValue > 5) {
+    //     ratingElement.style.color = "green";
+    //   } else if (ratingValue === 5) {
+    //     ratingElement.style.color = "yellow";
+    //   } else {
+    //     ratingElement.style.color = "red";
+    //   }
+    // } else {
+    //   console.warn("Rating element is empty. Setting default value (e.g., 0)");
+    //   // Handle empty rating case
+    // }
+  </script>
+</body>
+
+</html>
