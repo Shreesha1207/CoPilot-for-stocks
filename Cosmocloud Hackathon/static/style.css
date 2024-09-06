@@ -29,15 +29,10 @@ body {
 }
 
 /* Heading Styling */
-/* h1 {
-    color: #007bff;
-    margin-bottom: 20px;
-} */
 h1 {
     color: #003366; /* Navy Blue for headings */
     margin-bottom: 20px; /* Space below the heading */
 }
-
 
 /* Form Styling */
 form {
@@ -46,18 +41,15 @@ form {
     align-items: center;
 }
 
-/* Form Elements */
-/* label {
-    margin-bottom: 5px;
-    font-weight: bold;
-} */
+/* Label Styling */
 label {
-    color: #333333; /* Dark gray for labels */
-    margin-bottom: 10px; /* Space below the label */
+    color: #333333;
+    margin-bottom: 10px;
     font-size: 16px;
 }
 
-input[type="text"] {
+/* Input and Select */
+input[type="text"], select {
     width: 100%;
     max-width: 400px;
     padding: 10px;
@@ -66,28 +58,10 @@ input[type="text"] {
     border-radius: 4px;
 }
 
-select {
-    width: 100%;
-    max-width: 200px;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-/* Blue color :
-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-} */
+/* Button Styling */
 button {
     background-color: #008080; /* Teal background */
-    color: #ffffff; /* White text */
+    color: #ffffff;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -99,17 +73,53 @@ button:hover {
     background-color: #0056b3;
 }
 
+/* Popular Stocks Styling */
+.popular-stocks {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.stock-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.stock-button:hover {
+    background-color: #0056b3;
+}
+
 /* Error Message */
 p[style*="color: red;"] {
     color: red;
     margin-top: 10px;
 }
 
-/* Result Section */
-.result-section {
-    margin-top: 20px;
+/* Container Styling */
+.container {
+    width: 80%;
+    max-width: 800px;
+    margin: 20px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
+/* Heading Styling */
+h1 {
+    color: #003366; /* Navy Blue for headings */
+    margin-bottom: 20px;
+}
+
+/* Graph Styling */
 img {
     max-width: 100%;
     height: auto;
@@ -117,14 +127,44 @@ img {
     border-radius: 4px;
 }
 
-/* Link Styling */
+/* Form Elements */
+form {
+    margin-top: 20px;
+}
+
+label {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+select {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background-color: #008080;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
 a {
     color: #007bff;
-    text-decoration: none;
     margin-top: 20px;
-    display: inline-block;
+    display: block;
+    text-decoration: none;
 }
 
 a:hover {
     text-decoration: underline;
 }
+

@@ -3,27 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Checker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Stock Info</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .popular-stocks {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .popular-stock {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .popular-stock:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: red;
+            font-size: 1.2em;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Check Your Stock</h1>
+        <h1>Stock Information</h1>
+
         {% if error %}
-            <p style="color: red;">{{ error }}</p>
+        <div class="error">{{ error }}</div>
         {% endif %}
-        <form method="post">
-            <label for="stock">Enter Stock Symbol:</label>
-            <input type="text" id="stock" name="stock" required>
-            
-            <!-- <label for="period">Select Period:</label>
-            <select id="period" name="period">
-                <option value="1d">Today</option>
-                <option value="5d">This Week</option>
-                <option value="1mo">This Month</option>
-            </select> -->
-            
-            <button type="submit">Check Stock</button>
+
+        <div class="popular-stocks">
+            {% for stock in popular_stocks %}
+            <form action="{{ url_for('get_stock', stock_symbol=stock) }}" method="GET">
+                <button class="popular-stock">{{ stock }}</button>
+            </form>
+            {% endfor %}
+        </div>
+
+        <form action="/" method="POST">
+            <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
+            <button type="submit">Get Stock Info</button>
         </form>
     </div>
 </body>

@@ -1,55 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Result</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ stock }} Stock Info</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .graph-container {
+            margin: 30px 0;
+        }
+
+        .stock-details {
+            margin-top: 20px;
+        }
+
+        .stock-details div {
+            margin-bottom: 10px;
+        }
+
+        .period-buttons {
+            margin-top: 20px;
+        }
+
+        .period-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .period-button:hover {
+            background-color: #0056b3;
+        }
+
+        .rating {
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Stock Analysis</h1>
-    <p>Stock: {{ stock }}</p>
-    <p>Price: ₹{{ price }}</p>
-    <p id="rating">Rating: {{ rating }}/10</p>
-    <p>Top Investors Interested: {{ 'Yes' if top_investors else 'No' }}</p>
+    <div class="container">
+        <h1>{{ stock }} Stock Information</h1>
 
-    <h2>Performance Graph</h2>
-    <img src="data:image/png;base64,{{ graph }}" alt="Stock Performance Graph">
+        <div class="stock-details">
+            <div>Price: ${{ price }}</div>
+            <div>Rating: <span class="rating">{{ rating }}/10</span></div>
+            <div>Top Investors Interested: {{ 'Yes' if top_investors else 'No' }}</div>
+        </div>
 
-    <form method="post" action="/update">
-      <input type="hidden" name="stock" value="{{ stock }}">
-      <label for="period">Select Performance Period:</label>
-      <select id="period" name="period">
-        <option value="1d" {% if period=='1d' %}selected{% endif %}>Today</option>
-        <option value="5d" {% if period=='5d' %}selected{% endif %}>This Week</option>
-        <option value="1mo" {% if period=='1mo' %}selected{% endif %}>This Month</option>
-      </select>
-      <button type="submit">Update Graph</button>
-    </form>
+        <div class="graph-container">
+            <img src="data:image/png;base64,{{ graph }}" alt="Stock Performance Graph">
+        </div>
 
-    <a href="/">Check another stock</a>
-  </div>
-  <script>
-    // let ratingElement = document.getElementById("rating");
-
-    // if (ratingElement.textContent.trim()) {
-    //   let ratingValue = parseFloat(ratingElement.textContent.trim());
-
-    //   if (ratingValue > 5) {
-    //     ratingElement.style.color = "green";
-    //   } else if (ratingValue === 5) {
-    //     ratingElement.style.color = "yellow";
-    //   } else {
-    //     ratingElement.style.color = "red";
-    //   }
-    // } else {
-    //   console.warn("Rating element is empty. Setting default value (e.g., 0)");
-    //   // Handle empty rating case
-    // }
-  </script>
+        <div class="period-buttons">
+            <form action="{{ url_for('result', stock=stock) }}" method="GET">
+                <input type="hidden" name="period" value="1d">
+                <button class="period-button" type="submit">1 Day</button>
+            </form>
+            <form action="{{ url_for('result', stock=stock) }}" method="GET">
+                <input type="hidden" name="period" value="1wk">
+                <button class="period-button" type="submit">1 Week</button>
+            </form>
+            <form action="{{ url_for('result', stock=stock) }}" method="GET">
+                <input type="hidden" name="period" value="1mo">
+                <button class="period-button" type="submit">1 Month</button>
+            </form>
+        </div>
+    </div>
 </body>
-
 </html>
