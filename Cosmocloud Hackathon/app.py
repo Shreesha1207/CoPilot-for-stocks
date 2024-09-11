@@ -1,10 +1,15 @@
+import os
 from flask import Flask, render_template, request
 import yfinance as yf
 import matplotlib.pyplot as plt
 import io
 import base64
+import google.generativeai as genai
 
 app = Flask(__name__)
+
+# Fetch the API Key
+genai.configure(api_key=os.getenv('API_KEY'))
 
 def get_stock_info(stock_symbol, period='1d', interval='1m'):
     # Create a Ticker object
@@ -12,54 +17,92 @@ def get_stock_info(stock_symbol, period='1d', interval='1m'):
     hist = stock.history(period=period, interval=interval)
 
     if hist.empty or 'Close' not in hist.columns:
-        return None, False, 0, None  # Return 0 rating and no graph if no data is available
-    
+        return None, 0, None  # Return 0 rating and no graph if no data is available
+
     # Extract the latest closing price safely
-    stock_price = hist['Close'].iloc[-1] if not hist.empty else None
-    
-    if stock_price is None:
-        return None, False, 0, None  # Handle cases where no stock price is available
-
-    
-    # Extract the latest closing price
     stock_price = hist['Close'].iloc[-1]
-    
-    # Calculate the rating based on the past month
-    month_hist = stock.history(period='1mo', interval='1d')
-    if month_hist.empty:
-        rating = 0
-    else:
-        # Calculate stock performance over the past month
-        month_performance = (stock_price - month_hist['Close'].iloc[0]) / month_hist['Close'].iloc[0] * 100
 
-        # Determine stability based on volatility over the past month
-        stability = month_hist['Close'].std()  # Standard deviation as a measure of volatility
-        
-        # Calculate a basic rating
-        rating = 5  # Start with a base rating of 5
-        
-        # Increase rating based on positive performance
-        if month_performance > 0:
-            rating += min(3, month_performance / 10)  # Cap the increase to 3 points
-        
-        # Decrease rating for high volatility (less stable)
-        if stability > stock_price * 0.05:  # Consider a stock volatile if its std dev > 5% of price
-            rating -= min(2, stability / stock_price * 20)  # Cap the decrease to 2 points
-        
-        # Adjust rating based on top investor interest
-        top_investors_interested = stock_symbol in ['AAPL', 'MSFT', 'GOOGL']
-        if top_investors_interested:
-            rating += 1  # Increase rating if top investors are interested
-        
-        # Ensure the rating is between 1 and 10
-        rating = max(1, min(10, rating))
-        
-        # Round the rating to 1 decimal place
-        rating = round(rating, 1)
-    
+    # Get rating from AI
+    rating = get_stock_rating_from_gemini(stock_symbol, period, interval)
+
     # Generate the performance graph based on the selected period
     graph = generate_graph(hist, period)
-    return stock_price, top_investors_interested, rating, graph
+
+    return stock_price, rating, graph
+
+def get_stock_rating_from_gemini(stock_symbol, period, interval):
+    stock = yf.Ticker(stock_symbol)
+    hist = stock.history(period=period, interval=interval)
+
+    # Get the income statement instead of earnings
+    income_stmt = stock.income_stmt
+
+    if income_stmt is None:
+        return 0.0  # Handle missing financial data
+
+    net_income = income_stmt.get('Net Income', 0)
+    eps = income_stmt.get('Earnings Per Share', 0)
+
+    # Get balance sheet info safely
+    balance_sheet = stock.balance_sheet
+
+    if balance_sheet is not None:
+        total_revenue = balance_sheet.get('Total Revenue', 0)
+        total_liabilities = balance_sheet.get('Total Liabilities', 0)
+        stockholder_equity = balance_sheet.get('Stockholder Equity', 0)
+
+        # Calculate financial ratios
+        if total_revenue and stockholder_equity and total_liabilities:
+            profit_margin = net_income / total_revenue
+            debt_equity_ratio = total_liabilities / stockholder_equity
+        else:
+            profit_margin = 0
+            debt_equity_ratio = 0
+    else:
+        profit_margin = 0
+        debt_equity_ratio = 0
+
+    # Gather additional financial data
+    info = stock.info
+
+    industry = info.get('industry', 'N/A')
+    market_cap = info.get('marketCap', 0)
+    pe_ratio = info.get('trailingPE', 0)
+
+    # Update the prompt with specific data
+    prompt = f"""
+    Evaluate stock {stock_symbol} based on:
+    - EPS: {eps}
+    - Profit Margin: {profit_margin}
+    - Debt-to-Equity Ratio: {debt_equity_ratio}
+    - Industry: {industry}
+    - Market Cap: {market_cap}
+    - P/E Ratio: {pe_ratio}
+
+    Provide a rating between 1 and 10. Just give the rating(number). Do not explain the rating.
+    """
+
+    # Call the Gemini API to generate content
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    try:
+        response = model.generate_content(prompt)
+
+        # Check if response has a 'result' attribute
+        if hasattr(response, 'result'):
+            rating_text = response.result.candidates[0].content.parts[0].text.strip()
+            rating = float(rating_text)
+            return round(rating, 1)
+        elif hasattr(response, 'candidates'):
+            # If 'result' is missing, try accessing 'candidates' directly
+            rating_text = response.candidates[0].content.parts[0].text.strip()
+            rating = float(rating_text)
+            return round(rating, 1)
+        else:
+            print("Error: Unable to extract rating from response.")
+            return 0.0  # Handle the error gracefully
+    except Exception as e:
+        print(f"Error: {e}")
+        return 0.0
 
 def generate_graph(hist, period):
     plt.figure(figsize=(10, 5))
@@ -67,109 +110,82 @@ def generate_graph(hist, period):
 
     # Format the x-axis based on the selected period
     if period == '1d':
-        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%H:%M'))  # Hour:Minute format
-        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.HourLocator(interval=1))  # Major ticks every hour
+        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%H:%M'))
+        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.HourLocator(interval=1))
     elif period == '5d':
-        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%b %d'))  # Month Day format
-        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.DayLocator(interval=1))  # Major ticks every day
+        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%b %d'))
+        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.DayLocator(interval=1))
     elif period == '1mo':
-        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%b %d'))  # Month Day format
-        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.WeekdayLocator(interval=1))  # Major ticks every week
+        plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%b %d'))
+        plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.WeekdayLocator(interval=1))
 
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.title(f'Stock Performance Over {period}')
     plt.legend()
-    
+
     # Rotate date labels for better readability
     plt.gcf().autofmt_xdate()
 
     # Save the plot to a BytesIO object
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
+    plt.close()  # Close the figure to free memory
     buf.seek(0)
-    
+
     # Encode the image to base64
     graph = base64.b64encode(buf.getvalue()).decode('utf-8')
     buf.close()
-    
-    return graph
 
+    return graph
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         stock_symbol = request.form['stock'].upper()
-        
+
         # For Yahoo Finance, you might need to use '.NS' for NSE stocks or '.BO' for BSE stocks
         if stock_symbol in ['RELIANCE', 'TCS', 'INFY']:
             stock_symbol += '.NS'
-        
+
         # Default period and interval
         period = '1d'
         interval = '1m'
-        
-        stock_price, top_investors, rating, graph = get_stock_info(stock_symbol, period=period, interval=interval)
-        stock_price=round(stock_price,3)
-        
+
+        stock_price, rating, graph = get_stock_info(stock_symbol, period=period, interval=interval)
+
         if stock_price:
-            return render_template("result.html", stock=stock_symbol, price=stock_price, top_investors=top_investors, rating=rating, graph=graph, period=period)
+            stock_price = round(stock_price, 3)
+            return render_template("result.html", stock=stock_symbol, price=stock_price, rating=rating, graph=graph, period=period)
         else:
             error_message = "Could not retrieve data for the stock symbol provided. Please check the symbol and try again."
             return render_template('index.html', error=error_message)
-            
+
     return render_template('index.html')
 
-@app.route('/result', methods=['GET', 'POST'])
 @app.route('/result/<stock>', methods=['GET', 'POST'])
 def result(stock):
-    period = request.args.get('period')
-    
+    period = request.args.get('period', '1d')
+
     # Set interval based on the period selected
     if period == '1d':
         interval = '30m'  # 30 minutes interval for 1 day
     elif period == '1wk':
-        period='5d'
+        period = '5d'
         interval = '1h'  # 1-hour interval for 5 days
     elif period == '1mo':
         interval = '1d'  # 1-day interval for 1 month
     else:
         interval = '1d'  # Default to 1-day interval if unknown period
-    
-    stock_price, top_investors, rating, graph = get_stock_info(stock, period=period, interval=interval)
-    
-    # Check for NoneType before rounding
+
+    stock_price, rating, graph = get_stock_info(stock, period=period, interval=interval)
+
     if stock_price is not None:
         stock_price = round(stock_price, 3)
+        return render_template('result.html', stock=stock, price=stock_price, rating=rating, graph=graph, period=period)
     else:
         error_message = "Could not retrieve data for the stock symbol provided. Please check the symbol and try again."
         return render_template('index.html', error=error_message)
-    
-    return render_template('result.html', stock=stock, price=stock_price, top_investors=top_investors, rating=rating, graph=graph, period=period)
-
-
-# @app.route('/update', methods=['POST'])
-# def update():
-#     stock_symbol = request.form['stock']
-#     period = request.form['period']
-    
-#     # Set interval based on the selected period
-#     if period == '1d':
-#         interval = '30m'  # 30 minutes interval for 1 day period
-#     elif period == '1wk':
-#         interval = '1d'  # 1 hour interval for 1 week period
-#     else:
-#         interval = '1wk'  # 1 day interval for 1 month period
-    
-#     stock_price, top_investors, rating, graph = get_stock_info(stock_symbol, period=period, interval=interval)
-#     stock_price = round(stock_price, 3)
-    
-#     if stock_price:
-#         return render_template('result.html', stock=stock_symbol, price=stock_price, top_investors=top_investors, rating=rating, graph=graph, period=period)
-#     else:
-#         error_message = "Could not retrieve data for the stock symbol provided. Please check the symbol and try again."
-#         return render_template('index.html', error=error_message)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
