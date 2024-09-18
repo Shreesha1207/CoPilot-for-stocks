@@ -58,6 +58,34 @@
             font-weight: bold;
             color: #28a745;
         }
+
+        /* Styling for the column bar */
+        #stock-indicator-container {
+            width: 100%;
+            height: 40px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        #stock-indicator-bar {
+            height: 100%;
+            width: 0%;
+            background-color: yellow;
+            border-radius: 5px;
+            transition: width 0.5s, background-color 0.5s;
+        }
+
+        #stock-indicator-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -67,7 +95,39 @@
         <div class="stock-details">
             <div>Price: ${{ price }}</div>
             <div>Rating: <span class="rating">{{ rating }}/10</span></div>
-            <!-- <div>Top Investors Interested: {{ 'Yes' if top_investors else 'No' }}</div> -->
+
+            <!-- Column bar indicator for Buy/Hold/Sell -->
+            <div id="stock-indicator-container">
+                <div id="stock-indicator-bar"></div>
+                <p id="stock-indicator-text"></p>
+            </div>
+
+            <script>
+                function updateStockIndicator(rating) {
+                    const bar = document.getElementById('stock-indicator-bar');
+                    const text = document.getElementById('stock-indicator-text');
+
+                    // Set the width of the bar based on the rating (scaled percentage)
+                    let width = Math.min(100, (rating / 10) * 100);
+                    bar.style.width = width + "%";
+
+                    // Set the color and text based on the rating value
+                    if (rating <= 4) {
+                        bar.style.backgroundColor = 'red';
+                        text.innerHTML = 'Sell';
+                    } else if (rating > 4 && rating < 7) {
+                        bar.style.backgroundColor = 'yellow';
+                        text.innerHTML = 'Hold';
+                    } else {
+                        bar.style.backgroundColor = 'green';
+                        text.innerHTML = 'Buy';
+                    }
+                }
+
+                // Example: Update the bar with a stock rating value (use actual rating from your app)
+                const stockRating = { rating }; // Replace with dynamic value
+                updateStockIndicator(stockRating);
+            </script>
         </div>
 
         <div class="graph-container">
