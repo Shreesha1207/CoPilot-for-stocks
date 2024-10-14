@@ -53,20 +53,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>Stock Information</h1>
+        <!-- <h1>Popular Stocks</h1>
 
         {% if error %}
         <div class="error">{{ error }}</div>
-        {% endif %}
+        {% endif %} -->
 
+        {% if popular_stocks %}
+        <!-- <h2>Popular Stocks</h2> -->
         <div class="popular-stocks">
-            {% for stock in popular_stocks %}
-            <form action="{{ url_for('get_stock', stock_symbol=stock) }}" method="GET">
-                <button class="popular-stock">{{ stock }}</button>
+          {% for stock in popular_stocks %}
+            <form action="/" method="POST">
+              <button class="popular-stock" name="stock" value="{{ stock }}">{{ stock }}</button>
             </form>
-            {% endfor %}
+          {% endfor %}
         </div>
+      {% endif %}
+      
 
+        <h2>Enter a Stock Symbol</h2>
         <form action="/" method="POST">
             <input type="text" name="stock" placeholder="Enter Stock Symbol" required>
             <button type="submit">Get Stock Info</button>

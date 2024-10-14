@@ -5,11 +5,18 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import google.generativeai as genai
+import pymongo
 
 app = Flask(__name__)
 
 # Fetch the API Key
-genai.configure(api_key=os.getenv('API_KEY'))
+genai.configure(api_key="AIzaSyAcsU2OPwlK7mDeIVxvO6eIB5bDew2ZxdQ")
+
+# Connect to MongoDB
+client=pymongo.MongoClient("mongodb+srv://shreeshamr:Fk6zmcIOUcQJuSro@clusterforstocks.b2yrq.mongodb.net/?retryWrites=true&w=majority&appName=Clusterforstocks")
+  # Use your MongoDB connection URI
+db = client['copilotforstocks']  # Replace with your database name
+popular_stocks_collection = db['popular stocks']  # Replace with your collection name
 
 def get_stock_info(stock_symbol, period='1d', interval='1m'):
     # Create a Ticker object
@@ -144,10 +151,12 @@ def index():
     if request.method == 'POST':
         stock_symbol = request.form['stock'].upper()
 
-        # For Yahoo Finance, you might need to use '.NS' for NSE stocks or '.BO' for BSE stocks
-        if stock_symbol in ['RELIANCE', 'TCS', 'INFY']:
-            stock_symbol += '.NS'
+        # Retrieve popular stocks from MongoDB
+        popular_stock = popular_stocks_collection.find({'symbol': stock_symbol})
 
+        # For Yahoo Finance, you might need to use '.NS' for NSE stocks or '.BO' for BSE stocks
+        if popular_stock and stock_symbol in ['RELIANCE', 'TCS', 'INFY']:
+            stock_symbol += '.NS'
         # Default period and interval
         period = '1d'
         interval = '1m'
@@ -185,7 +194,7 @@ def result(stock):
         return render_template('result.html', stock=stock, price=stock_price, rating=rating, graph=graph, period=period)
     else:
         error_message = "Could not retrieve data for the stock symbol provided. Please check the symbol and try again."
-        return render_template('index.html', error=error_message)
+        return render_template('index.html', error=error_message,rating=rating)
 
 if __name__ == '__main__':
     app.run(debug=True)
