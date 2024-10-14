@@ -1,2 +1,3 @@
 Run the python file.
 Make sure that the gemini api key is set as the environment variable
+Make sure to get the gemini api key from google cloud or from https://ai.google.dev/gemini-api/docs/api-key

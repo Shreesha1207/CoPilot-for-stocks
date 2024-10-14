@@ -10,7 +10,7 @@ import pymongo
 app = Flask(__name__)
 
 # Fetch the API Key
-genai.configure(api_key="AIzaSyAcsU2OPwlK7mDeIVxvO6eIB5bDew2ZxdQ")
+genai.configure(api_key="Google_api_key") #Include your gemini api key here
 
 # Connect to MongoDB
 client=pymongo.MongoClient("mongodb+srv://shreeshamr:Fk6zmcIOUcQJuSro@clusterforstocks.b2yrq.mongodb.net/?retryWrites=true&w=majority&appName=Clusterforstocks")
