@@ -1,5 +1,2 @@
-You have to get the Gemini API KEY.
-Then you have to set it as an environment variable through bash/terminal/cmd
-cmd: set VARIABLE_NAME=value
-terminal: $env:VARIABLE_NAME = "value"
-bash: export VARIABLE_NAME=value
+Run the python file.
+Make sure that the gemini api key is set as the environment variable
