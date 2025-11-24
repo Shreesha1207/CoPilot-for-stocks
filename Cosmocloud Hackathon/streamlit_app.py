@@ -64,14 +64,19 @@ POPULAR_STOCKS = {
 with st.sidebar:
     st.title("🤖 Stock Copilot")
     
-    # Load API Key from Environment
+    # Load API Key (Cloud or Local)
     from dotenv import load_dotenv
     import os
     load_dotenv()
     
-    api_key = os.getenv("GOOGLE_API_KEY")
+    # Try getting key from Streamlit Secrets (Cloud) or Environment (Local)
+    if "GOOGLE_API_KEY" in st.secrets:
+        api_key = st.secrets["GOOGLE_API_KEY"]
+    else:
+        api_key = os.getenv("GOOGLE_API_KEY")
+
     if not api_key:
-        st.error("⚠️ Google API Key not found. Please set it in the .env file.")
+        st.error("⚠️ Google API Key not found. Please set it in Streamlit Secrets or .env file.")
         st.stop()
     
     genai.configure(api_key=api_key)
