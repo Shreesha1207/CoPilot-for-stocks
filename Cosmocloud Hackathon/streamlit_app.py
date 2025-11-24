@@ -103,18 +103,26 @@ with st.sidebar:
         st.session_state.messages = []
         st.session_state.last_ticker = ticker
     
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+
     st.markdown("---")
     st.info("💡 **Tip:** Ask the Copilot about trends, comparisons, or financial health!")
 
 # --- Helper Functions ---
+@st.cache_data(ttl=180)
 def get_stock_data(ticker, period):
     try:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
-        return stock, hist
+        # Access properties to trigger fetch and cache the result
+        info = stock.info
+        income_stmt = stock.income_stmt
+        return info, hist, income_stmt
     except Exception as e:
         st.error(f"Error fetching data: {e}")
-        return None, None
+        return None, None, None
 
 def get_ai_insight(prompt, context_data):
     try:
@@ -141,13 +149,13 @@ def get_ai_insight(prompt, context_data):
 
 # --- Main Content ---
 if ticker:
-    stock, hist = get_stock_data(ticker, period)
+    info, hist, income_stmt = get_stock_data(ticker, period)
     
-    if stock and not hist.empty:
+    if info and not hist.empty:
         # Header
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.title(f"{stock.info.get('longName', ticker)} ({ticker})")
+            st.title(f"{info.get('longName', ticker)} ({ticker})")
             current_price = hist['Close'].iloc[-1]
             previous_close = hist['Close'].iloc[-2] if len(hist) > 1 else current_price
             delta = current_price - previous_close
@@ -160,7 +168,7 @@ if ticker:
             )
         
         with col2:
-            logo_url = stock.info.get('logo_url')
+            logo_url = info.get('logo_url')
             if logo_url:
                 st.image(logo_url, width=100)
 
@@ -189,7 +197,7 @@ if ticker:
 
         with tab2:
             st.subheader("Key Financial Metrics")
-            info = stock.info
+            # info is already available
             
             m_col1, m_col2, m_col3 = st.columns(3)
             with m_col1:
@@ -206,11 +214,11 @@ if ticker:
                 st.markdown(f"**Beta:** {info.get('beta', 'N/A')}")
 
             st.subheader("Income Statement (Annual)")
-            st.dataframe(stock.income_stmt)
+            st.dataframe(income_stmt)
 
         with tab3:
             st.subheader("Company Summary")
-            st.write(stock.info.get('longBusinessSummary', 'No summary available.'))
+            st.write(info.get('longBusinessSummary', 'No summary available.'))
 
         with tab4:
             st.header("💬 Chat with Stock Copilot")
@@ -235,9 +243,9 @@ if ticker:
                 context = f"""
                 Stock: {ticker}
                 Current Price: {current_price}
-                PE Ratio: {stock.info.get('trailingPE', 'N/A')}
-                Market Cap: {stock.info.get('marketCap', 'N/A')}
-                Business Summary: {stock.info.get('longBusinessSummary', '')[:500]}...
+                PE Ratio: {info.get('trailingPE', 'N/A')}
+                Market Cap: {info.get('marketCap', 'N/A')}
+                Business Summary: {info.get('longBusinessSummary', '')[:500]}...
                 Recent History (Last 5 points): {hist.tail().to_string()}
                 """
                 
